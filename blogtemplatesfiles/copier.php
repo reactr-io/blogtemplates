@@ -80,7 +80,7 @@ class NBT_Template_copier {
                     update_post_meta( $post_id, 'nbt_block_post', true );
                 }
             }
-        } 
+        }
 
 
         if ( apply_filters( 'nbt_change_attachments_urls', true ) )
@@ -96,8 +96,7 @@ class NBT_Template_copier {
         }
 
         // Now we need to update the blog status because of a conflict with Multisite Privacy Plugin
-        // Added check to avoid update if Pro Sites is enabled
-        if ( ! class_exists( 'ProSites' ) && isset( $this->settings['copy_status'] ) && $this->settings['copy_status'] && is_plugin_active( 'sitewide-privacy-options/sitewide-privacy-options.php' ) ) {
+        if ( isset( $this->settings['copy_status'] ) && $this->settings['copy_status'] &&  is_plugin_active( 'sitewide-privacy-options/sitewide-privacy-options.php' ) ) {
             update_blog_status( $this->new_blog_id, 'public', get_blog_status( $this->template_blog_id, 'public' ) );
         }
 
@@ -110,11 +109,19 @@ class NBT_Template_copier {
 
             if ( is_array( $theme_mods ) ) {
                 foreach ( $theme_mods as $theme_mod => $value ) {
-                    set_theme_mod( $theme_mod, $value );        
+                    set_theme_mod( $theme_mod, $value );
                 }
             }
-            
+
+            // Privacy options
+	        $blog_details = get_blog_details( $this->template_blog_id );
+            update_blog_status( get_current_blog_id(),'public', $blog_details->public );
         }
+
+//        flush_rewrite_rules();
+//        global $wp_rewrite;
+//        $wp_rewrite->flush_rules();
+//        $wp_rewrite->init();
 
         do_action( "blog_templates-copy-after_copying", $this->template, $this->new_blog_id, $this->user_id );
 
@@ -169,12 +176,7 @@ class NBT_Template_copier {
     public function copy_settings() {
         global $wpdb;
 
-        $exclude_public_option = '';
-        if ( class_exists( 'ProSites' ) ) {
-            $exclude_public_option = "AND `option_name` != 'blog_public'";
-        }
-
-        $exclude_settings = apply_filters( 'blog_template_exclude_settings', "`option_name` != 'siteurl' AND `option_name` != 'blogname' AND `option_name` != 'admin_email' AND `option_name` != 'new_admin_email' AND `option_name` != 'home' AND `option_name` != 'upload_path' AND `option_name` != 'db_version' AND `option_name` != 'secret' AND `option_name` != 'fileupload_url' AND `option_name` != 'nonce_salt' {$exclude_public_option}" );
+        $exclude_settings = apply_filters( 'blog_template_exclude_settings', "`option_name` != 'siteurl' AND `option_name` != 'blogname' AND `option_name` != 'admin_email' AND `option_name` != 'new_admin_email' AND `option_name` != 'home' AND `option_name` != 'upload_path' AND `option_name` != 'db_version' AND `option_name` != 'secret' AND `option_name` != 'fileupload_url' AND `option_name` != 'nonce_salt' AND `option_name` != 'permalink_structure'" );
         $new_prefix = $wpdb->prefix;
 
         //Delete the current options, except blog-specific options
@@ -240,14 +242,7 @@ class NBT_Template_copier {
                 'deleted' => $source_blog_details->deleted,
                 'lang_id' => $source_blog_details->lang_id
             );
-
-            // Remove 'public' from the array if Pro Sites is Enabled
-            if ( class_exists( 'ProSites' ) ) {
-                unset( $new_blog_details['public'] );
-            }
-
             update_blog_details( $this->new_blog_id, $new_blog_details );
-
             do_action( 'blog_templates-copy-options', $this->template );
         }
         else {
@@ -467,8 +462,8 @@ class NBT_Template_copier {
     }
 
     /**
-     * Copy additional tables. Tables can be only created 
-     * @param type $copy_empty 
+     * Copy additional tables. Tables can be only created
+     * @param type $copy_empty
      * @return type
      */
     public function copy_additional_tables() {
@@ -489,10 +484,18 @@ class NBT_Template_copier {
             $all_source_tables = $tables_to_copy;
 
         $all_source_tables = apply_filters( 'nbt_copy_additional_tables', $all_source_tables );
-        $table_pairs = $this->associate_tables( $all_source_tables );
 
-        foreach ( $table_pairs as $source_table => $new_table ) {
-            $add = in_array( $new_table, $tables_to_copy );
+        foreach ( $all_source_tables as $table ) {
+            $add = in_array( $table, $tables_to_copy );
+            $table = esc_sql( $table );
+
+            // MultiDB Hack
+            if ( is_a( $wpdb, 'm_wpdb' ) )
+                $tablebase = end( explode( '.', $table, 2 ) );
+            else
+                $tablebase = $table;
+
+            $new_table = $new_prefix . substr( $tablebase, strlen( $template_prefix ) );
 
             $result = $wpdb->get_results( "SHOW TABLES LIKE '{$new_table}'", ARRAY_N );
             if ( ! empty( $result ) ) {
@@ -508,7 +511,7 @@ class NBT_Template_copier {
             else {
                 // The table does not exist in the new blog
                 // Let's create it
-                $create_script = current( $wpdb->get_col( 'SHOW CREATE TABLE ' . $source_table, 1 ) );
+                $create_script = current( $wpdb->get_col( 'SHOW CREATE TABLE ' . $table, 1 ) );
 
                 if ( $create_script && preg_match( '/\(.*\)/s', $create_script, $match ) ) {
                     $table_body = $match[0];
@@ -517,30 +520,20 @@ class NBT_Template_copier {
                      *
                      * @param string $query Current query to create the table
                      * @param string $new_table The name of the new table that will be created
-                     * @param string $source_table Source table name
+                     * @param string $table Source table name
                      */
-
-                    $table_body = str_replace(
-                        array_keys( $table_pairs ),
-                        array_values( $table_pairs ),
-                        $table_body
-                    );
-
-                    $create_table_query = apply_filters( 'nbt_create_additional_table_query', "CREATE TABLE IF NOT EXISTS {$new_table} {$table_body}", $new_table, $source_table );
-
-                    $wpdb->query( 'SET foreign_key_checks = 0' );
+                    $create_table_query = apply_filters( 'nbt_create_additional_table_query', "CREATE TABLE IF NOT EXISTS {$new_table} {$table_body}", $new_table, $table );
                     $wpdb->query( $create_table_query );
-                    $wpdb->query( 'SET foreign_key_checks = 1' );
 
                     if ( $add ) {
                         // And copy the content if needed
                         if ( is_a( $wpdb, 'm_wpdb' ) ) {
-                            $rows = $wpdb->get_results( "SELECT * FROM {$source_table}", ARRAY_A );
+                            $rows = $wpdb->get_results( "SELECT * FROM {$table}", ARRAY_A );
                             foreach ( $rows as $row ) {
                                 $wpdb->insert( $new_table, $row );
                             }
                         } else {
-                            $wpdb->query( "INSERT INTO {$new_table} SELECT * FROM {$source_table}" );
+                            $wpdb->query( "INSERT INTO {$new_table} SELECT * FROM {$table}" );
                         }
                     }
 
@@ -554,44 +547,6 @@ class NBT_Template_copier {
             }
 
         }
-    }
-
-
-    /**
-     * Generates an array associating source table names with target table names with new prefix
-     * @param array $tables 
-     * @return array $paired_tables
-     */
-    public function associate_tables( $tables = array() ) {
-
-        if ( empty( $tables ) ) {
-            return array();
-        }
-
-        global $wpdb;
-        $paired_tables          = array();
-        $new_prefix             = $wpdb->prefix;
-        $template_prefix        = $wpdb->get_blog_prefix( $this->template_blog_id );
-
-        foreach ( $tables as $source_table ) {
-
-            $target_table = esc_sql( $source_table );
-
-            // MultiDB Hack
-            if ( is_a( $wpdb, 'm_wpdb' ) ) {
-                $tablebase = end( explode( '.', $target_table, 2 ) );
-            } else {
-                $tablebase = $target_table;
-            }
-
-            $new_table = $new_prefix . substr( $tablebase, strlen( $template_prefix ) );
-
-            $paired_tables[ $source_table ] = $new_table;
-
-        }
-
-        return $paired_tables;
-
     }
 
     /**
@@ -958,9 +913,9 @@ class NBT_Template_copier {
         // First, the menus
         $menus_ids = implode( ',', $menu_locations );
 
-        $menus = $wpdb->get_results( "SELECT * FROM $templated_terms_table t 
-            JOIN $templated_term_taxonomy_table tt ON t.term_id = tt.term_id 
-            WHERE taxonomy = 'nav_menu'" 
+        $menus = $wpdb->get_results( "SELECT * FROM $templated_terms_table t
+            JOIN $templated_term_taxonomy_table tt ON t.term_id = tt.term_id
+            WHERE taxonomy = 'nav_menu'"
         );
 
         if ( ! empty( $menus ) ) {
@@ -1113,6 +1068,3 @@ class NBT_Template_copier {
         $result = $wpdb->query( "UPDATE $wpdb->term_taxonomy SET count = 0" );
     }
 }
-
-
-

@@ -20,9 +20,9 @@ class blog_templates_model {
 
 		/**
 		 * Singleton Pattern
-		 * 
+		 *
 		 * Gets the instance of the class
-		 * 
+		 *
 		 * @since 1.8
 		 */
 		public static function get_instance() {
@@ -33,7 +33,7 @@ class blog_templates_model {
 
 		/**
 		 * Constructor
-		 * 
+		 *
 		 * @since 1.8
 		 */
 		public function __construct() {
@@ -53,7 +53,7 @@ class blog_templates_model {
 
 		/**
 		 * Creates all tables
-		 * 
+		 *
 		 * @since 1.8
 		 */
 		public function create_tables() {
@@ -118,7 +118,7 @@ class blog_templates_model {
 			dbDelta($sql);
 		}
 
-		
+
 
 		public function upgrade_22() {
 			require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
@@ -128,7 +128,7 @@ class blog_templates_model {
 		public function check_for_uncategorized_templates() {
 			global $wpdb;
 
-			$uncategorized_templates = $wpdb->get_results( "SELECT t.ID 
+			$uncategorized_templates = $wpdb->get_results( "SELECT t.ID
 				FROM  $this->templates_table t
 				LEFT OUTER JOIN $this->categories_relationships_table ct ON ct.template_id = t.ID
 				WHERE cat_id IS NULL");
@@ -141,7 +141,7 @@ class blog_templates_model {
 					}
 				}
 			}
-			
+
 
 		}
 
@@ -171,7 +171,7 @@ class blog_templates_model {
 
 			$current_site_id = ! empty ( $current_site ) ? $current_site->id : 1;
 
-			$wpdb->insert( 
+			$wpdb->insert(
 				$this->templates_table,
 				array(
 					'blog_id' =>  $blog_id,
@@ -194,7 +194,7 @@ class blog_templates_model {
 
 		/**
 		 * Check if a blog is a template or not
-		 * 
+		 *
 		 * @param Integer $blog_id Blog ID to check
 		 * @return Boolean
 		 */
@@ -225,7 +225,7 @@ class blog_templates_model {
 				'update_dates' => $update_dates
 			) );
 
-			$wpdb->update( 
+			$wpdb->update(
 				$this->templates_table,
 				array(
 					'name' => $name,
@@ -271,37 +271,37 @@ class blog_templates_model {
 			return $default_template_id;
 		}
 
-		/**
-		 * Get available templates list.
-		 *
-		 * @return mixed|void
-		 */
 		public function get_templates() {
 			global $wpdb, $current_site;
 
-			// Initialize the results array.
-			$final_results = array();
-			// Get current id.
 			$current_site_id = ! empty ( $current_site ) ? $current_site->id : 1;
+			$sql = "SELECT * FROM $this->templates_table WHERE network_id = %d";
 
-			// Get templates from db.
-			$results = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $this->templates_table WHERE network_id = %d", $current_site_id ), ARRAY_A );
+			$order_by = filter_input( INPUT_GET, 'orderby' );
+
+			if ( in_array( $order_by, array( 'name', 'blog_id' ) ) ) {
+			    $order_direction = strtoupper( filter_input( INPUT_GET, 'order' ) );
+			    if ( !in_array( $order_direction, array( 'ASC', 'DESC' ) ) ) {
+			        $order_direction = '';
+			    }
+
+			    $sql .= " ORDER BY `" . $order_by . "` " . $order_direction;
+			}
+
+			$results = $wpdb->get_results( $wpdb->prepare( $sql, $current_site_id ), ARRAY_A );
 
 			if ( ! empty( $results ) ) {
+				$final_results = array();
 				foreach ( $results as $template ) {
 					$final_results[$template['ID']] = $template;
 					$final_results[$template['ID']]['options'] = maybe_unserialize( $template['options'] );
 				}
+				return $final_results;
+			}
+			else {
+				return array();
 			}
 
-			/**
-			 * Filter to modify the templates.
-			 *
-			 * @param array $final_results List of templates.
-			 *
-			 * @since 2.8.5
-			 */
-			return apply_filters( 'nbt_get_templates', $final_results );
 		}
 
 		public function set_default_template( $id ) {
@@ -384,34 +384,34 @@ class blog_templates_model {
 		public function add_template_category( $name, $description, $is_default = false ) {
 			global $wpdb;
 
-			$wpdb->insert( 
-				$this->categories_table, 
-				array( 
-					'name' => $name, 
+			$wpdb->insert(
+				$this->categories_table,
+				array(
+					'name' => $name,
 					'description' => $description,
 					'is_default' => ( $is_default ) ? 1 : 0
-				), 
-				array( 
-					'%s', 
+				),
+				array(
+					'%s',
 					'%s',
 					'%d'
-				) 
+				)
 			);
 		}
 
 		public function update_template_category( $id, $name, $description ) {
 			global $wpdb;
 
-			$wpdb->update( 
-				$this->categories_table, 
-				array( 
-					'name' => $name, 
-					'description' => $description 
-				), 
+			$wpdb->update(
+				$this->categories_table,
+				array(
+					'name' => $name,
+					'description' => $description
+				),
 				array( 'ID' => $id ),
-				array( 
-					'%s', 
-					'%s' 
+				array(
+					'%s',
+					'%s'
 				),
 				array( '%d' )
 			);
@@ -436,7 +436,7 @@ class blog_templates_model {
 
 			$results =  $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT rel.cat_id ID, cat.name, cat.description, cat.is_default 
+					"SELECT rel.cat_id ID, cat.name, cat.description, cat.is_default
 					FROM  $this->categories_table cat
 					INNER JOIN $this->categories_relationships_table rel ON rel.cat_id = cat.ID
 					WHERE rel.template_id = %d",
@@ -450,7 +450,7 @@ class blog_templates_model {
                 $category = $this->get_template_category( $def_cat_id );
                 $results = array( $category );
 			}
-			
+
 			return $results;
 		}
 
@@ -505,7 +505,7 @@ class blog_templates_model {
 			if ( (boolean)$this->is_default_category( $cat_id ) ) {
 				// If we are searching by default category we need to merge
 				// those templates without category assigned
-				$templates_with_no_cat = $wpdb->get_results( 
+				$templates_with_no_cat = $wpdb->get_results(
 					"SELECT t.* FROM $this->templates_table t
 					WHERE t.ID NOT IN
 					( SELECT DISTINCT( tr.template_id ) FROM $this->categories_relationships_table tr )",
@@ -533,5 +533,4 @@ class blog_templates_model {
 			return $results;
 		}
 }
-
 

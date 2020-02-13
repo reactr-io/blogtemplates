@@ -3,7 +3,7 @@
  * Contains specific behavior altering filters.
  */
 
- 
+
 /**
  * Ensure we're the last thing to run on blog creation.
  */
@@ -11,38 +11,18 @@ function blog_template_ensure_last_place () {
 	global $wp_filter, $blog_templates;
 	if (!$wp_filter || !$blog_templates) return false;
 
-	$tag = 'wp_initialize_site';
+	$tag = 'wpmu_new_blog';
 	$method = 'set_blog_defaults';
-	$action_order = $highest = 0;
+	$action_order = false;
 
 	$bt_callback = array($blog_templates, $method);
 	if (!is_callable($bt_callback)) return false;
 
-	if (has_action($tag, $bt_callback)) { 
+	if (has_action($tag, $bt_callback)) {
 		// This is all provided it's even bound
 		$actions = !empty($wp_filter[$tag]) ? $wp_filter[$tag] : false;
+		if (!$actions) return false;
 
-		if ( ! $actions ) return false;
-
-		$priorities = array();
-
-		
-		foreach ( $actions->callbacks as $priority => $callbacks ) {
-
-			$priorities[] = $priority;
-
-			foreach ( $callbacks as $tag_key => $callback ) {
-				if ( substr_compare( $tag_key, $method, strlen( $tag_key )-strlen( $method ), strlen( $method ) ) === 0 ) {
-		            $action_order = $priority;
-		        }
-			}
-	    }
-
-	    if ( ! empty( $priorities ) ) {
-	    	$highest = max( $priorities );
-	    }	    
-
-/*
 		$highest = max(array_keys($actions));
 		if (!$idx = _wp_filter_build_unique_id($tag, $bt_callback, false)) return false; // Taken from core (`has_filter()`)
 
@@ -51,20 +31,19 @@ function blog_template_ensure_last_place () {
 			$action_order = $priority;
 			break;
 		}
-*/
+
 		if ($action_order >= $highest) return true; // We're the on the bottom, all good.
 
 		// If we reached here, this is not good - we need to re-bind to highest position
-		remove_action($tag, $bt_callback, $action_order, 2);
+		remove_action($tag, $bt_callback, $action_order, 6);
 		$action_order = $highest + 10;
-
 	} else {
 		// No action bound, let's do our thing
 		$action_order = defined('NBT_APPLY_TEMPLATE_ACTION_ORDER') && NBT_APPLY_TEMPLATE_ACTION_ORDER ? NBT_APPLY_TEMPLATE_ACTION_ORDER : 9999;
 		$action_order = apply_filters('blog_templates-actions-action_order', $action_order);
 	}
 
-	add_action($tag, $bt_callback, $action_order, 2);
+	add_action($tag, $bt_callback, $action_order, 6);
 	return true;
 }
 if (defined('NBT_ENSURE_LAST_PLACE') && NBT_ENSURE_LAST_PLACE) add_action('init', 'blog_template_ensure_last_place', 99);
@@ -87,17 +66,17 @@ add_filter('blog_template_exclude_settings', 'blog_template_exclude_gravity_form
 
 
 /**
- * Exclude Contact Form 7 postmeta fields 
+ * Exclude Contact Form 7 postmeta fields
  */
 function blog_template_contact_form7_postmeta ($row, $table) {
 	if ("postmeta" != $table) return $row;
-	
+
 	$key = @$row['meta_key'];
 	$wpcf7 = array('mail', 'mail_2');
 	if (defined('NBT_PASSTHROUGH_WPCF7_MAIL_FIELDS') && NBT_PASSTHROUGH_WPCF7_MAIL_FIELDS) return $row;
 	if (defined('NBT_CONVERT_WPCF7_MAIL_FIELDS') && NBT_CONVERT_WPCF7_MAIL_FIELDS) return blog_template_convert_wpcf7_mail_fields($row);
 	if (in_array($key, $wpcf7)) return false;
-	
+
 	return $row;
 }
 function blog_template_convert_wpcf7_mail_fields ($row) {
@@ -119,7 +98,7 @@ function blog_template_convert_wpcf7_mail_fields ($row) {
 	$new_site_url = get_bloginfo('url');
 	$new_admin_email = get_option('admin_email');
 	// ... more stuff at some point
-	
+
 	// Do the replace
 	foreach ($wpcf7 as $key => $val) {
 		$val = preg_replace('/' . preg_quote($site_url, '/') . '/i', $new_site_url, $val);

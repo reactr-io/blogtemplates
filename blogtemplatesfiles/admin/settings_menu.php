@@ -12,7 +12,7 @@ class blog_templates_settings_menu {
 
 	function __construct() {
 		global $wp_version;
-       
+
 
         add_action( 'network_admin_menu', array( $this, 'network_admin_page' ) );
 
@@ -21,7 +21,7 @@ class blog_templates_settings_menu {
 
         add_action( 'admin_enqueue_scripts', array( $this, 'add_javascript' ) );
 
-       
+
 	}
 
 
@@ -49,7 +49,7 @@ class blog_templates_settings_menu {
      * @since 1.0
      */
     function admin_options_page() {
-        
+
 	    $t = isset( $_GET['t'] ) ? (string) $_GET['t'] : '';
         $settings = nbt_get_settings();
 
@@ -57,23 +57,24 @@ class blog_templates_settings_menu {
 
 			<div class="wrap">
 			    <form method="post" id="options">
-		        	<?php wp_nonce_field('blog_templates-update-options', '_nbtnonce'); ?> 
-                    
+		        	<?php wp_nonce_field('blog_templates-update-options', '_nbtnonce'); ?>
+
+                    <?php screen_icon( 'blogtemplates' ); ?>
 		            <h2><?php _e('Options', 'blog_templates'); ?></h2>
-					
+
 					<h3><?php _e( 'Template selection', 'blog_templates' ); ?></h3>
 		            <table class="form-table">
 		            	<?php ob_start(); ?>
 			                <label for="show-registration-templates">
-			                    <input type="checkbox" <?php checked( !empty($settings['show-registration-templates']) ); ?> name="show-registration-templates" id="show-registration-templates" value="1"/> 
+			                    <input type="checkbox" <?php checked( !empty($settings['show-registration-templates']) ); ?> name="show-registration-templates" id="show-registration-templates" value="1"/>
 			                    <?php _e('Selecting this option will allow your new users to choose between templates when they sign up for a site.', 'blog_templates'); ?>
 			                </label><br/>
 			                <?php $this->render_row( __('Show templates selection on registration:', 'blog_templates'), ob_get_clean() ); ?>
-			            
+
 			            <?php ob_start(); ?>
 
-                        <?php 
-                            $appearance_template = $settings['registration-templates-appearance']; 
+                        <?php
+                            $appearance_template = $settings['registration-templates-appearance'];
                             if ( empty( $appearance_template ) )
                                 $appearance_template = 0;
 
@@ -86,7 +87,7 @@ class blog_templates_settings_menu {
                                 <?php echo $label ?>
                             </label>
                             <?php if ( $type === 'page_showcase' ) {
-                                wp_dropdown_pages( array( 
+                                wp_dropdown_pages( array(
                                     'selected' => $settings['page-showcase-id'],
                                     'name' => 'page-showcase-id',
                                     'show_option_none' => __( 'Select a page', 'blog_templates' ),
@@ -111,12 +112,8 @@ class blog_templates_settings_menu {
                                 <input type="text" name="registration-screenshots-width" id="registration-templates-screenshots-width" value="<?php echo $settings['screenshots_width']; ?>" class="small-text" /> px
                             </label>
                             <label style="margin-left:20px;margin-top:20px;display:block;">
-                                <?php _e( 'Selected overlay color', 'blog_templates'); ?><br/>
+                                <?php _e( 'Selected overlay/border color', 'blog_templates'); ?><br/>
                                 <input type="text" class="color-field" id="selected-overlay-color" name="selected-overlay-color" value="<?php echo $settings['overlay_color']; ?>" />
-                            </label>
-                            <label style="margin-left:20px;margin-top:20px;display:block;">
-                                <?php _e( 'Unselected overlay color', 'blog_templates'); ?><br/>
-                                <input type="text" class="color-field" id="selected-showcase-background-color" name="unselected-overlay_color" value="<?php echo $settings['unselected-overlay_color']; ?>" />
                             </label>
                         </div>
 
@@ -132,41 +129,41 @@ class blog_templates_settings_menu {
                         </div>
                         <?php $this->render_row( __('Type of selection', 'blog_templates'), ob_get_clean() ); ?>
 			        </table>
-                    
+
                     <?php if ( apply_filters( 'nbt_activate_categories_feature', true ) ): ?>
                         <h3><?php _e( 'Categories Toolbar', 'blog_templates' ); ?></h3>
                         <table class="form-table">
                             <?php ob_start(); ?>
                                 <label for="show-categories-selection">
-                                    <input type="checkbox" <?php checked( !empty($settings['show-categories-selection']) ); ?> name="show-categories-selection" id="show-categories-selection" value="1"/> 
+                                    <input type="checkbox" <?php checked( !empty($settings['show-categories-selection']) ); ?> name="show-categories-selection" id="show-categories-selection" value="1"/>
                                     <?php _e( 'A new toolbar will appear on to on the selection screen. Users will be able to filter by templates categories.', 'blog_templates'); ?>
                                 </label><br/>
                                 <?php $this->render_row( __('Show categories menu', 'blog_templates'), ob_get_clean() ); ?>
-                            
+
                             <?php ob_start(); ?>
 
                             <?php ob_start(); ?>
                                 <label for="toolbar-color">
-                                    <input type="text" class="color-field" name="toolbar-color" id="toolbar-color" value="<?php echo $settings['toolbar-color']; ?>"/> 
+                                    <input type="text" class="color-field" name="toolbar-color" id="toolbar-color" value="<?php echo $settings['toolbar-color']; ?>"/>
                                 </label>
                                 <?php $this->render_row( __( 'Toolbar background color', 'blog_templates' ), ob_get_clean() ); ?>
-                            
+
                             <?php ob_start(); ?>
 
                             <?php ob_start(); ?>
                                 <label for="toolbar-text-color">
-                                    <input type="text" class="color-field" name="toolbar-text-color" id="toolbar-text-color" value="<?php echo $settings['toolbar-text-color']; ?>"/> 
+                                    <input type="text" class="color-field" name="toolbar-text-color" id="toolbar-text-color" value="<?php echo $settings['toolbar-text-color']; ?>"/>
                                 </label>
                                 <?php $this->render_row( __( 'Toolbar text color', 'blog_templates' ), ob_get_clean() ); ?>
-                            
+
                             <?php ob_start(); ?>
 
                             <?php ob_start(); ?>
                                 <label for="toolbar-border-color">
-                                    <input type="text" class="color-field" name="toolbar-border-color" id="toolbar-border-color" value="<?php echo $settings['toolbar-border-color']; ?>"/> 
+                                    <input type="text" class="color-field" name="toolbar-border-color" id="toolbar-border-color" value="<?php echo $settings['toolbar-border-color']; ?>"/>
                                 </label>
                                 <?php $this->render_row( __( 'Toolbar border color', 'blog_templates' ), ob_get_clean() ); ?>
-                            
+
                         </table>
                     <?php endif; ?>
 		            <p><div class="submit"><input type="submit" name="save_options" class="button-primary" value="<?php esc_attr_e(__('Save Settings', 'blog_templates'));?>" /></div></p>
@@ -201,7 +198,7 @@ class blog_templates_settings_menu {
                 <tr valign="top">
                     <th scope="row"><label for="site_name"><?php echo $title; ?></label></th>
                     <td>
-                        <?php echo $markup; ?>          
+                        <?php echo $markup; ?>
                     </td>
                 </tr>
             <?php
@@ -231,8 +228,8 @@ class blog_templates_settings_menu {
                 $settings['show-registration-templates'] = isset($_POST['show-registration-templates']) ? (int)$_POST['show-registration-templates'] : 0;
 
                 $selection_types = nbt_get_template_selection_types();
-                $appearance = isset( $_POST['registration-templates-appearance'] ) && array_key_exists( $_POST['registration-templates-appearance'], $selection_types) 
-                    ? $_POST['registration-templates-appearance'] 
+                $appearance = isset( $_POST['registration-templates-appearance'] ) && array_key_exists( $_POST['registration-templates-appearance'], $selection_types)
+                    ? $_POST['registration-templates-appearance']
                     : key( $selection_types );
                 if ( 'page_showcase' == $appearance && ! empty( $_POST['page-showcase-id'] ) && $page = get_post( absint( $_POST['page-showcase-id'] ) ) ) {
 
@@ -248,7 +245,6 @@ class blog_templates_settings_menu {
                 $settings['toolbar-border-color'] = isset($_POST['toolbar-border-color']) ? $_POST['toolbar-border-color'] : $defaults['toolbar-border-color'];
                 $settings['selected-background-color'] = isset($_POST['selected-background-color']) ? $_POST['selected-background-color'] : $defaults['selected-background-color'];
                 $settings['unselected-background-color'] = isset($_POST['unselected-background-color']) ? $_POST['unselected-background-color'] : $defaults['unselected-background-color'];
-                $settings['unselected-overlay_color'] = isset($_POST['unselected-overlay_color']) ? $_POST['unselected-overlay_color'] : $defaults['unselected-overlay_color'];
                 $settings['overlay_color'] = isset($_POST['selected-overlay-color']) ? $_POST['selected-overlay-color'] : $defaults['overlay_color'];
 
                 if ( ! empty( $_POST['registration-templates-button-text'] ) )
@@ -271,7 +267,7 @@ class blog_templates_settings_menu {
 
                 if ( ! ( isset( $_POST['repair-tables'] ) ) )
                     return false;
-                
+
                 $model = nbt_get_model();
                 $model->create_tables();
 

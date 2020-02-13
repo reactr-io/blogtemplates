@@ -1,7 +1,7 @@
 <?php
 /**
- * Theme screenshot selection with titles and description template. 
- * 
+ * Theme screenshot selection with titles and description template.
+ *
  * Copy this file into your theme directory and edit away!
  * You can also use $templates array to iterate through your templates.
  */
@@ -15,15 +15,14 @@
 			$templates = nbt_theme_selection_toolbar( $templates );
 
     ?>
-    
+
 	<div class="blog_template-option">
-		
-		<?php 
-		foreach ($templates as $tkey => $template) { 
+
+		<?php
+		foreach ($templates as $tkey => $template) {
 			nbt_render_theme_selection_item( 'screenshot_plus', $tkey, $template, $settings );
-		} 
+		}
 		?>
 		<div style="clear:both;"></div>
 	</div>
 </div>
-

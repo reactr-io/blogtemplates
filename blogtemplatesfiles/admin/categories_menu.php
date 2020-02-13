@@ -47,10 +47,11 @@ class blog_templates_categories_menu {
     	}
     	?>
 			<div class="wrap">
+				<?php screen_icon( 'blogtemplates' ); ?>
 				<h2><?php echo get_admin_page_title(); ?></h2>
-				
+
 				<?php if ( isset( $_GET['action'] ) && 'edit' == $_GET['action'] && isset( $_GET['category'] ) && $cat_id = absint( $_GET['category'] ) ): ?>
-					
+
 					<?php
 						$model = nbt_get_model();
 						$category = $model->get_template_category( $cat_id );
@@ -63,7 +64,7 @@ class blog_templates_categories_menu {
 						<table class="form-table">
 							<?php
 								ob_start();
-							?>	
+							?>
 								<input type="text" name="cat_name" class="large-text" value="<?php echo esc_attr( $category['name'] ); ?>">
 							<?php
 								$this->render_row( __( 'Category name', 'blog_templates' ), ob_get_clean() );
@@ -71,7 +72,7 @@ class blog_templates_categories_menu {
 
 							<?php
 								ob_start();
-							?>	
+							?>
 								<textarea name="cat_description" rows="5" cols="50" class="large-text"><?php echo esc_textarea( $category['description'] ); ?></textarea>
 							<?php
 								$this->render_row( __( 'Category description', 'blog_templates' ), ob_get_clean() );
@@ -173,7 +174,7 @@ class blog_templates_categories_menu {
 			<tr valign="top">
 				<th scope="row"><label for="site_name"><?php echo $title; ?></label></th>
 				<td>
-					<?php echo $markup; ?>			
+					<?php echo $markup; ?>
 				</td>
 			</tr>
 		<?php

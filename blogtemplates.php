@@ -5,7 +5,7 @@ Plugin URI: http://premium.wpmudev.org/project/new-blog-template
 Description: Allows the site admin to create new blogs based on templates, to speed up the blog creation process
 Author: WPMU DEV
 Author URI: http://premium.wpmudev.org/
-Version: 2.8.7-beta-1
+Version: 2.8.6
 Network: true
 Text Domain: blog_templates
 Domain Path: lang
@@ -29,7 +29,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-define( 'NBT_PLUGIN_VERSION', '2.8.4' );
+define( 'NBT_PLUGIN_VERSION', '2.8.6' );
 if ( ! is_multisite() )
 	exit( __( 'The New Blog Template plugin is only compatible with WordPress Multisite.', 'blog_templates' ) );
 
@@ -55,21 +55,19 @@ require_once( NBT_PLUGIN_DIR . 'blogtemplatesfiles/blog_templates.php' );
 require_once( NBT_PLUGIN_DIR . 'blogtemplatesfiles/blog_templates_lock_posts.php' );
 require_once( NBT_PLUGIN_DIR . 'blogtemplatesfiles/settings-handler.php' );
 
-if ( file_exists( NBT_PLUGIN_DIR . 'blogtemplatesfiles/externals/wpmudev-dash-notification.php' ) ){
-	include_once( NBT_PLUGIN_DIR . 'blogtemplatesfiles/externals/wpmudev-dash-notification.php' );	
-}
+include_once( NBT_PLUGIN_DIR . 'blogtemplatesfiles/externals/wpmudev-dash-notification.php' );
 global $wpmudev_notices;
 $wpmudev_notices[] = array( 'id'=> 130,'name'=> 'New Blog Templates', 'screens' => array( 'toplevel_page_blog_templates_main-network', 'blog-templates_page_blog_templates_categories-network', 'blog-templates_page_blog_templates_settings-network' ) );
 
 if ( is_network_admin() ) {
 	require_once( NBT_PLUGIN_DIR . 'blogtemplatesfiles/tables/templates_table.php' );
 	require_once( NBT_PLUGIN_DIR . 'blogtemplatesfiles/tables/categories_table.php' );
-	
+
 }
 
 /**
  * Load the plugin text domain and MO files
- * 
+ *
  * These can be uploaded to the main WP Languages folder
  * or the plugin one
  */
@@ -86,7 +84,7 @@ add_action( 'plugins_loaded', 'nbt_load_text_domain' );
 function nbt_get_default_screenshot_url( $blog_id ) {
 	switch_to_blog($blog_id);
 	$img = untrailingslashit(dirname(get_stylesheet_uri())) . '/screenshot.png';
-	restore_current_blog();	
+	restore_current_blog();
 	return $img;
 }
 
@@ -94,24 +92,24 @@ function nbt_display_page_showcase( $content ) {
 	if ( is_page() ) {
 		$settings = nbt_get_settings();
 		if ( 'page_showcase' == $settings['registration-templates-appearance'] && is_page( $settings['page-showcase-id'] ) && is_main_site() ) {
-			
+
             $tpl_file = "blog_templates-registration-page-showcase.php";
             $templates = $settings['templates'];
 
             // Setup theme file
             ob_start();
             $theme_file = locate_template( array( $tpl_file ) );
-            $theme_file = $theme_file ? $theme_file : NBT_PLUGIN_DIR . 'blogtemplatesfiles/template/' . $tpl_file;
-            if ( ! file_exists( $theme_file ) ) 
+            $theme_file = $theme_file ? $theme_file : NBT_PLUGIN_DIR . '/blogtemplatesfiles/template/' . $tpl_file;
+            if ( ! file_exists( $theme_file ) )
                 return false;
 
             nbt_render_theme_selection_scripts( $settings );
 
-            
+
             @include $theme_file;
-			
+
 			$content .= ob_get_clean();
-			
+
 		}
 	}
 
@@ -167,7 +165,7 @@ function nbt_redirect_signup() {
 			exit();
 		}
 
-	}	
+	}
 }
 add_action( 'init', 'nbt_redirect_signup', 5 );
 
@@ -186,7 +184,7 @@ function nbt_bp_redirect_signup_location() {
 	if ( ! $signup_slug )
 		return;
 
-	$page = get_posts( 
+	$page = get_posts(
 		array(
 			'name' => $signup_slug,
 			'post_type' => 'page'
@@ -206,16 +204,13 @@ function nbt_bp_redirect_signup_location() {
 			exit();
 		}
 	}
-	
+
 }
 add_action( 'template_redirect', 'nbt_bp_redirect_signup_location', 15 );
 
 function nbt_render_theme_selection_item( $type, $tkey, $template, $options = array() ) {
 
-	// First try to get selected template from $_POST.
-	$selected = isset( $_POST['blog_template'] ) ? absint( $_POST['blog_template'] ) : '';
-	// If not found, try the whole $_REQUEST.
-	$selected = empty( $selected ) && isset( $_REQUEST['blog_template'] ) ? absint( $_REQUEST['blog_template'] ) : $selected;
+	$selected = isset( $_REQUEST['blog_template'] ) ? absint( $_REQUEST['blog_template'] ) : '';
 
 	if ( $selected == $tkey ) {
 		$default = "blog_template-default_item";
@@ -224,19 +219,13 @@ function nbt_render_theme_selection_item( $type, $tkey, $template, $options = ar
 		$default = @$options['default'] == $tkey ? "blog_template-default_item" : "";
 	}
 
-	// If in case template is in wrong format.
-	if ( isset( $template['options'] ) ) {
-		$template = array_merge( $template, $template['options'] );
-		unset( $template['options'] );
-	}
-
 	if ( 'previewer' == $type ) {
 		$img = ( ! empty( $template['screenshot'] ) ) ? $template['screenshot'] : nbt_get_default_screenshot_url( $template['blog_id'] );
 		$tplid = $template['name'];
 		$blog_url = get_site_url( $template['blog_id'], '', 'http' );
 		?>
 			<div class="template-signup-item theme-previewer-wrap <?php echo $default; ?>" data-tkey="<?php echo $tkey; ?>" id="theme-previewer-wrap-<?php echo $tkey;?>">
-				
+
 				<a href="#<?php echo $tplid; ?>" class="blog_template-item_selector">
 					<img src="<?php echo $img;?>" />
 					<input type="radio" name="blog_template" id="blog-template-radio-<?php echo $tkey;?>" <?php checked( ! empty( $default ) ); ?> value="<?php echo $tkey;?>" style="display: none" />
@@ -246,7 +235,7 @@ function nbt_render_theme_selection_item( $type, $tkey, $template, $options = ar
 					<button rel="nofollow" class="view-demo-button" data-blog-url="<?php echo $blog_url;?>"><?php _e( 'View demo', 'blog_templates' ); ?></button><br/><br/>
 					<button class="select-theme-button" data-theme-key="<?php echo $tkey;?>"><?php echo $options['previewer_button_text']; ?></button>
 				</div>
-				
+
 				<?php if ( ! empty( $template['description'] ) ): ?>
 					<div id="nbt-desc-pointer-<?php echo $tkey; ?>" class="nbt-desc-pointer">
 						<?php echo nl2br($template['description']); ?>
@@ -270,7 +259,7 @@ function nbt_render_theme_selection_item( $type, $tkey, $template, $options = ar
 		$sign_up_url = add_query_arg( 'blog_template', $tkey, $sign_up_url );
 		?>
 			<div class="template-signup-item theme-page-showcase-wrap <?php echo $default; ?>" data-tkey="<?php echo $tkey; ?>" id="theme-page-showcase-wrap-<?php echo $tkey;?>">
-				
+
 				<a href="#<?php echo $tplid; ?>" class="blog_template-item_selector">
 					<img src="<?php echo $img;?>" />
 				</a>
@@ -279,7 +268,7 @@ function nbt_render_theme_selection_item( $type, $tkey, $template, $options = ar
 					<button rel="nofollow" class="view-demo-button" data-blog-url="<?php echo $blog_url;?>"><?php _e( 'View demo', 'blog_templates' ); ?></button><br/><br/>
 					<button class="select-theme-button" data-signup-url="<?php echo esc_url( $sign_up_url );?>"><?php echo $options['previewer_button_text']; ?></button>
 				</div>
-				
+
 				<?php if ( ! empty( $template['description'] ) ): ?>
 					<div id="nbt-desc-pointer-<?php echo $tkey; ?>" class="nbt-desc-pointer">
 						<?php echo nl2br($template['description']); ?>
@@ -297,14 +286,14 @@ function nbt_render_theme_selection_item( $type, $tkey, $template, $options = ar
 					<img src="<?php echo $img;?>" />
 					<input type="radio" id="blog-template-radio-<?php echo $tkey;?>" <?php checked( ! empty( $default ) ); ?> name="blog_template" value="<?php echo $tkey;?>" style="display: none" />
 				</a>
-				
+
 				<?php if ( ! empty( $template['description'] ) ): ?>
 					<div id="nbt-desc-pointer-<?php echo $tkey; ?>" class="nbt-desc-pointer">
 						<?php echo nl2br($template['description']); ?>
 					</div>
 				<?php endif; ?>
 			</div>
-		<?php 
+		<?php
 	}
 	elseif ( 'screenshot_plus' === $type ) {
 		$img = ( ! empty( $template['screenshot'] ) ) ? $template['screenshot'] : nbt_get_default_screenshot_url( $template['blog_id'] );
@@ -341,7 +330,7 @@ function nbt_render_theme_selection_item( $type, $tkey, $template, $options = ar
 	else {
 		?>
 			<option value="<?php echo esc_attr( $tkey );?>" <?php selected( ! empty( $default ) ); ?>><?php echo strip_tags($template['name']);?></option>
-		<?php	
+		<?php
 	}
 }
 
@@ -350,11 +339,10 @@ function nbt_render_theme_selection_scripts( $options ) {
 	$selected_color = $options['selected-background-color'];
 	$unselected_color = $options['unselected-background-color'];
 	$overlay_color = $options['overlay_color'];
-	$unselected_overlay_color = $options['unselected-overlay_color'];
 	$screenshots_width = $options['screenshots_width'];
 
-	wp_enqueue_script( 'nbt-template-selector', NBT_PLUGIN_URL . 'blogtemplatesfiles/assets/js/nbt-template-selector.js', array( 'jquery' ) );
-	wp_enqueue_style( 'nbt-template-selector', NBT_PLUGIN_URL . 'blogtemplatesfiles/assets/css/nbt-template-selector.css' );
+	wp_enqueue_script( 'nbt-template-selector', NBT_PLUGIN_URL . '/blogtemplatesfiles/assets/js/nbt-template-selector.js', array( 'jquery' ) );
+	wp_enqueue_style( 'nbt-template-selector', NBT_PLUGIN_URL . '/blogtemplatesfiles/assets/css/nbt-template-selector.css' );
 	?>
 		<style>
 			.theme-previewer-wrap,
@@ -368,30 +356,27 @@ function nbt_render_theme_selection_scripts( $options ) {
 		</style>
 	<?php
 	if ( 'previewer' == $type ) {
-		wp_enqueue_script( 'nbt-template-selector-previewer', NBT_PLUGIN_URL . 'blogtemplatesfiles/assets/js/nbt-template-selector-previewer.js', array( 'jquery' ) );
-		wp_enqueue_style( 'nbt-template-selector-previewer', NBT_PLUGIN_URL . 'blogtemplatesfiles/assets/css/nbt-template-selector-previewer.css' );
+		wp_enqueue_script( 'nbt-template-selector-previewer', NBT_PLUGIN_URL . '/blogtemplatesfiles/assets/js/nbt-template-selector-previewer.js', array( 'jquery' ) );
+		wp_enqueue_style( 'nbt-template-selector-previewer', NBT_PLUGIN_URL . '/blogtemplatesfiles/assets/css/nbt-template-selector-previewer.css' );
 	}
 	elseif ( 'page_showcase' == $type ) {
-		wp_enqueue_script( 'nbt-template-selector-page_showcase', NBT_PLUGIN_URL . 'blogtemplatesfiles/assets/js/nbt-template-selector-page_showcase.js', array( 'jquery' ) );
-		wp_enqueue_style( 'nbt-template-selector-page_showcase', NBT_PLUGIN_URL . 'blogtemplatesfiles/assets/css/nbt-template-selector-page_showcase.css' );
+		wp_enqueue_script( 'nbt-template-selector-page_showcase', NBT_PLUGIN_URL . '/blogtemplatesfiles/assets/js/nbt-template-selector-page_showcase.js', array( 'jquery' ) );
+		wp_enqueue_style( 'nbt-template-selector-page_showcase', NBT_PLUGIN_URL . '/blogtemplatesfiles/assets/css/nbt-template-selector-page_showcase.css' );
 		?>
 			<style>
 				.theme-page-showcase-wrap {
-					background:<?php echo $unselected_overlay_color; ?>;
+					background:<?php echo $overlay_color; ?>;
 					width:<?php echo $screenshots_width; ?>px;
-				}
-				.blog_template-default_item {
-					background: <?php echo $overlay_color; ?>;
 				}
 			</style>
 		<?php
 	}
 	elseif ( 'screenshot' === $type ) {
-		wp_enqueue_script( 'nbt-template-selector-screenshot', NBT_PLUGIN_URL . 'blogtemplatesfiles/assets/js/nbt-template-selector-screenshot.js', array( 'jquery' ) );
+		wp_enqueue_script( 'nbt-template-selector-screenshot', NBT_PLUGIN_URL . '/blogtemplatesfiles/assets/js/nbt-template-selector-screenshot.js', array( 'jquery' ) );
 	}
 	elseif ( 'screenshot_plus' === $type ) {
-		wp_enqueue_script( 'nbt-template-selector-screenshot_plus', NBT_PLUGIN_URL . 'blogtemplatesfiles/assets/js/nbt-template-selector-screenshot_plus.js', array( 'jquery' ) );
-		wp_enqueue_style( 'nbt-template-selector-screenshot_plus', NBT_PLUGIN_URL . 'blogtemplatesfiles/assets/css/nbt-template-selector-screenshot_plus.css' );
+		wp_enqueue_script( 'nbt-template-selector-screenshot_plus', NBT_PLUGIN_URL . '/blogtemplatesfiles/assets/js/nbt-template-selector-screenshot_plus.js', array( 'jquery' ) );
+		wp_enqueue_style( 'nbt-template-selector-screenshot_plus', NBT_PLUGIN_URL . '/blogtemplatesfiles/assets/css/nbt-template-selector-screenshot_plus.css' );
 		?>
 			<style>
 				.theme-screenshot-plus-image-wrap {
@@ -401,7 +386,7 @@ function nbt_render_theme_selection_scripts( $options ) {
 		<?php
 	}
 	elseif ( 'description' === $type ) {
-		wp_enqueue_style( 'nbt-template-selector-description', NBT_PLUGIN_URL . 'blogtemplatesfiles/assets/css/nbt-template-selector-description.css' );
+		wp_enqueue_style( 'nbt-template-selector-description', NBT_PLUGIN_URL . '/blogtemplatesfiles/assets/css/nbt-template-selector-description.css' );
 	}
 }
 

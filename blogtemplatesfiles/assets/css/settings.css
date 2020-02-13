@@ -9,7 +9,7 @@
 #nbtpoststuff #post-body.columns-2 {
 	margin-right: 300px;
 }
-.rtl #nbtpoststuff #post-body.columns-2 {
+.rtl #nbtpoststuff #post-body.columns-2 {	 				     	 	  		 
 	margin-left: 300px;
 	margin-right: 0;
 }
@@ -24,3 +24,6 @@ padding: 0;
 .postbox ul {
 	margin-left:20px;
 }
+
+
+/* 385060-1525930551-ai */

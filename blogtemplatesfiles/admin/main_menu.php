@@ -18,7 +18,7 @@ class blog_templates_main_menu {
 
 	function __construct() {
 		global $wp_version;
-        
+
 		// Add the super admin page
         add_action( 'network_admin_menu', array( $this, 'network_admin_page' ) );
 
@@ -35,7 +35,7 @@ class blog_templates_main_menu {
 
     	if ( get_current_screen()->id == $this->page_id . '-network' ) {
     		wp_enqueue_script( 'nbt-templates-js', NBT_PLUGIN_URL . 'blogtemplatesfiles/assets/js/nbt-templates.js', array( 'jquery' ) );
-    		
+
     		wp_enqueue_style( 'nbt-settings-css', NBT_PLUGIN_URL . 'blogtemplatesfiles/assets/css/settings.css' );
 
     		wp_enqueue_script( 'jquery-ui-autocomplete' );
@@ -119,17 +119,18 @@ class blog_templates_main_menu {
 			?>
 
 			<div class="wrap">
+				<?php screen_icon( 'blogtemplates' ); ?>
 			    <form method="post" id="options" enctype="multipart/form-data">
-			        <?php wp_nonce_field('blog_templates-update-options', '_nbtnonce'); 
-			        
+			        <?php wp_nonce_field('blog_templates-update-options', '_nbtnonce');
+
 			        if ( ! is_numeric( $t ) ) { ?>
 			            <h2><?php _e( 'Blog Templates', 'blog_templates' ); ?></h2>
-			            <?php 
-			                $templates_table = new NBT_Templates_Table(); 
+			            <?php
+			                $templates_table = new NBT_Templates_Table();
 			                $templates_table->prepare_items();
 			                $templates_table->display();
 			            ?>
-			            
+
 			            <h2><?php _e('Create New Blog Template','blog_templates'); ?></h2>
 			            <p><?php _e('Create a blog template based on the blog of your choice! This allows you (and other admins) to copy all of the selected blog\'s settings and allow you to create other blogs that are almost exact copies of that blog. (Blog name, URL, etc will change, so it\'s not a 100% copy)','blog_templates'); ?></p>
 			            <p><?php _e('Simply fill out the form below and click "Create Blog Template!" to generate the template for later use!','blog_templates'); ?></p>
@@ -141,7 +142,7 @@ class blog_templates_main_menu {
 			                <?php ob_start(); ?>
 			                    <input name="copy_blog_id" type="text" id="copy_blog_id" size="10" placeholder="<?php _e( 'Blog ID', 'blog_templates' ); ?>"/>
 			                    <div class="ui-widget">
-				                    <label for="search_for_blog"> <?php _e( 'Or search by blog path', 'blog_templates' ); ?> 
+				                    <label for="search_for_blog"> <?php _e( 'Or search by blog path', 'blog_templates' ); ?>
 										<input type="text" id="search_for_blog" class="medium-text">
 										<span class="description"><?php _e( 'For example, if the blog you are searching has an URL like http://ablog.mydomain.com, you can type "ablog"', 'blog_templates' ); ?></span>
 				                    </label>
@@ -152,25 +153,25 @@ class blog_templates_main_menu {
 			                    <textarea class="large-text" name="template_description" type="text" id="template_description" cols="45" rows="5"></textarea>
 			                <?php $this->render_row( __( 'Template Description:', 'blog_templates' ), ob_get_clean() ); ?>
 
-			                <?php 
+			                <?php
 			                	ob_start();
 			                    echo '<strong>' . __( 'After you add this template, a set of options will show up on the edit screen.', 'blog_templates' ) . '</strong>';
 			                ?>
 			                <?php $this->render_row( __( 'More options', 'blog_templates' ), ob_get_clean() ); ?>
-			                
+
 			            </table>
 			            <p><?php _e('Please note that this will turn the blog you selected into a template blog. Any changes you make to this blog will change the template, as well! We recommend creating specific "Template Blogs" for this purpose, so you don\'t accidentally add new settings, content, or users that you don\'t want in your template.','blog_templates'); ?></p>
 			            <p><?php printf( __( 'This means that if you would like to create a dedicated template blog for this template, please <a href="%1$s">create a new blog</a> and then visit this page to create the template.','blog_templates' ), '<a href="' . ( get_bloginfo('version') >= 3 ) ? network_admin_url('site-new.php') : admin_url('wpmu-blogs.php') . '">'); ?></p>
 
 			            <?php submit_button( __( 'Create Blog Template!', 'blog_templates' ), 'primary', 'save_new_template' ); ?>
-			            
-			            
+
+
 			        <?php
 			            } else {
 			            	$model = nbt_get_model();
 			                $template = $model->get_template( $t );
 			        ?>
-			            
+
 			            <h2><?php _e('Edit Blog Template', 'blog_templates'); ?></h2>
 			            <p><a href="<?php echo $url; ?>">&laquo; <?php _e('Back to Blog Templates', 'blog_templates'); ?></a></p>
 			            <input type="hidden" name="template_id" value="<?php echo $t; ?>" />
@@ -186,8 +187,8 @@ class blog_templates_main_menu {
 						                    <textarea class="widefat" name="template_description" id="template_description" cols="45" rows="5"><?php echo esc_textarea( $template['description'] );?></textarea>
 						                <?php $this->render_row( __( 'Template Description', 'blog_templates' ), ob_get_clean() ); ?>
 
-						                <?php 
-						                    ob_start(); 
+						                <?php
+						                    ob_start();
 						                    $options_to_copy = array(
 						                        'settings' => array(
 						                        	'title' => __( 'Wordpress Settings, Current Theme, and Active Plugins', 'blog_templates' ),
@@ -234,7 +235,7 @@ class blog_templates_main_menu {
 						                  	<?php endforeach; ?>
 						                <?php $this->render_row( __( 'What To Copy To New Blog?', 'blog_templates' ), ob_get_clean() ); ?>
 
-						                
+
 						                <?php if ( is_plugin_active( 'sitewide-privacy-options/sitewide-privacy-options.php' ) ): ?>
 						                    <?php ob_start(); ?>
 						                        <input type='checkbox' name='copy_status' id='nbt-copy-status' <?php checked( ! empty( $template['copy_status'] ) ); ?>>
@@ -256,7 +257,7 @@ class blog_templates_main_menu {
 							            	</label>
 					                	<?php $this->render_row( __( 'Update dates', 'blog_templates' ), ob_get_clean() ); ?>
 
-					                    <?php 
+					                    <?php
 					                    	ob_start();
 
 					                    	if ( empty( $template['screenshot'] ) )
@@ -268,7 +269,7 @@ class blog_templates_main_menu {
 											<img src="<?php echo $img; ?>" style="max-width:100%;"/><br/>
 											<p>
 												<label for="screenshot">
-													<?php _e( 'Upload new screenshot', 'blog_templates' ); ?> 
+													<?php _e( 'Upload new screenshot', 'blog_templates' ); ?>
 													<input type="file" name="screenshot">
 												</label>
 												<?php submit_button( __( 'Reset screenshot', 'blog_templates' ), 'secondary', 'reset-screenshot', true ); ?>
@@ -278,7 +279,7 @@ class blog_templates_main_menu {
 
 						            <br/><br/>
 						            <h2><?php _e('Advanced Options','blog_templates'); ?></h2>
-						            
+
 							       	<table class="form-table">
 
 						                <?php ob_start(); ?>
@@ -300,7 +301,7 @@ class blog_templates_main_menu {
 						                			<label for="nbt-<?php echo esc_attr( $value ); ?>"><?php echo $table_name; ?></label><br/>
 						                		<?php
 						                	}
-						                			
+
 						                }
 						                else {
 						                	?>
@@ -308,18 +309,18 @@ class blog_templates_main_menu {
 						                	<?php
 						                }
 
-						                
+
 						                $this->render_row( __( 'Additional Tables', 'blog_templates' ), ob_get_clean() ); ?>
 
 
 					            	</table>
-					            	
+
 					            </div>
 
 					            <?php if ( apply_filters( 'nbt_activate_categories_feature', true ) ): ?>
-						            <?php 
+						            <?php
 						            	$model = nbt_get_model();
-						            	$categories = $model->get_templates_categories(); 
+						            	$categories = $model->get_templates_categories();
 						            	$template_categories_tmp = $model->get_template_categories( $t );
 
 						            	$template_categories = array();
@@ -343,17 +344,17 @@ class blog_templates_main_menu {
 													</div>
 												</div>
 											</div>
-										</div>			
+										</div>
 									</div>
 								<?php endif; ?>
 							</div>
 				        </div>
 		            </div>
 		            <div class="clear"></div>
-		            <?php submit_button( __( 'Save template', 'blog_templates' ), 'primary', 'save_updated_template' ); ?>		            
+		            <?php submit_button( __( 'Save template', 'blog_templates' ), 'primary', 'save_updated_template' ); ?>
 		        <?php } ?>
-		        
-		        
+
+
 		    </form>
 		<?php
 	    }
@@ -384,12 +385,12 @@ class blog_templates_main_menu {
                 <tr valign="top">
                     <th scope="row"><label for="site_name"><?php echo $title; ?></label></th>
                     <td>
-                        <?php echo $markup; ?>          
+                        <?php echo $markup; ?>
                     </td>
                 </tr>
             <?php
         }
-        
+
 
         /**
          * Separated into its own function so we could include it in the init hook
@@ -409,9 +410,9 @@ class blog_templates_main_menu {
 
                 if (! wp_verify_nonce($_POST['_nbtnonce'], 'blog_templates-update-options') )
                     die( __( 'Whoops! There was a problem with the data you posted. Please go back and try again. (Generated by New Blog Templates)', 'blog_templates' ) );
-                
 
-                $args = array( 
+
+                $args = array(
 	                'name' => stripslashes($_POST['template_name'] ),
 	                'description' => stripslashes( preg_replace('~<\s*\bscript\b[^>]*>(.*?)<\s*\/\s*script\s*>~is', '', $_POST['template_description'] ) ),
 	                'to_copy' => isset( $_POST['to_copy'] ) ? (array)$_POST['to_copy'] : array(),
@@ -438,6 +439,33 @@ class blog_templates_main_menu {
                 }
 
                 if ( ! empty( $_POST['reset-screenshot'] ) ) {
+					$template = $model->get_template( absint( $_POST['template_id'] ) );
+					if( ! empty( $template['screenshot'] ) ){
+
+						$upload_dir 		= wp_upload_dir();
+
+						//Remove the WP-Content part form the URL
+						$screenshot_url 	= $template['screenshot'];
+						$content_url 		= $upload_dir['baseurl'];
+						$screenshot_path 	= str_replace($content_url, "", $screenshot_url);
+
+						//Get the url pieces
+						$screenshot_path_array 	= explode( "/", $screenshot_path );
+						$screenshot_file 		= $upload_dir['basedir'];
+
+						$total_screenshot_fragments = count( $screenshot_path_array );
+						for( $i=0; $i<$total_screenshot_fragments; $i++ ){
+							if( isset( $screenshot_path_array[$i+1] ) ){
+								$screenshot_file .= DIRECTORY_SEPARATOR.$screenshot_path_array[$i+1];
+							}
+						}
+
+						//If the file exists, we remove it
+						if( !is_dir( $screenshot_file ) && file_exists( $screenshot_file ) ){
+							unlink( $screenshot_file );
+						}
+					}
+
             		$args['screenshot'] = false;
             	}
 
@@ -460,7 +488,7 @@ class blog_templates_main_menu {
                 		}
                 	}
                 }
-                $args['post_category'] = $post_category; 
+                $args['post_category'] = $post_category;
 
                 // PAGES IDs
                 $pages_ids = array( 'all-pages' );
@@ -543,7 +571,7 @@ class blog_templates_main_menu {
 
                 if ( ! wp_verify_nonce($_GET['_wpnonce'], 'blog_templates-remove_default') )
                     wp_die( __( 'Whoops! There was a problem with the data you posted. Please go back and try again. (Generated by New Blog Templates)', 'blog_templates' ) );
-               	
+
                	$model->remove_default_template();
                	$settings = nbt_get_settings();
 

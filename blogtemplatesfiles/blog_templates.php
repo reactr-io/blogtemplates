@@ -9,7 +9,7 @@ if ( ! class_exists( 'blog_templates' ) ) {
         *
         * @since 1.0
         */
-        
+
         function __construct() {
 
             if ( is_network_admin() ) {
@@ -17,11 +17,11 @@ if ( ! class_exists( 'blog_templates' ) ) {
 
                 if ( apply_filters( 'nbt_activate_categories_feature', true ) )
                     new blog_templates_categories_menu();
-                
+
                 new blog_templates_settings_menu();
             }
 
-            
+
 
             add_action( 'init', array( &$this, 'maybe_upgrade' ) );
             add_action( 'init', array( &$this, 'init' ) );
@@ -29,12 +29,12 @@ if ( ! class_exists( 'blog_templates' ) ) {
 
             // Actions
             $action_order = defined('NBT_APPLY_TEMPLATE_ACTION_ORDER') && NBT_APPLY_TEMPLATE_ACTION_ORDER ? NBT_APPLY_TEMPLATE_ACTION_ORDER : 9999;
-            add_action('wp_initialize_site', array($this, 'set_blog_defaults'), apply_filters('blog_templates-actions-action_order', $action_order), 2 ); // Set to *very high* so this runs after every other action; also, accepts 2 params so we can get to meta
-            add_action('admin_enqueue_scripts', array($this,'add_template_dd'));
+            add_action('wpmu_new_blog', array($this, 'set_blog_defaults'), apply_filters('blog_templates-actions-action_order', $action_order), 6); // Set to *very high* so this runs after every other action; also, accepts 6 params so we can get to meta
 
-            add_action('wp_enqueue_scripts', function() {
-                wp_enqueue_script("jquery");
-            });
+			// Add template selector to Add Site screen
+            add_action( 'network_site_new_form', array( $this, 'add_template_selector' ) );
+
+            add_action('wp_enqueue_scripts', create_function('', 'wp_enqueue_script("jquery");'));
 
             // Special features for Multi-Domains
             add_action( 'add_multi_domain_form_field', array($this, 'multi_domain_form_field' ) ); // add field to domain addition form
@@ -42,8 +42,8 @@ if ( ! class_exists( 'blog_templates' ) ) {
             add_filter( 'md_update_domain', array($this, 'multi_domain_update_domain' ), 10, 2 ); // saves blog template value on domain update
             add_filter( 'manage_multi_domains_columns', array($this, 'manage_multi_domains_columns' ) ); // add column to multi domain table
             add_action( 'manage_multi_domains_custom_column', array($this, 'manage_multi_domains_custom_column' ), 10, 2 ); // populate blog template column in multi domain table
-            
-            // Signup: WordPress            
+
+            // Signup: WordPress
             add_action( 'signup_hidden_fields', array( &$this, 'maybe_add_template_hidden_field' ) );
             add_action( 'signup_blogform', array( $this, 'registration_template_selection' ) );
             add_filter( 'add_signup_meta', array( $this, 'registration_template_selection_add_meta' ) );
@@ -70,7 +70,7 @@ if ( ! class_exists( 'blog_templates' ) ) {
 
         public function enqueue_styles() {
             global $wp_version;
-            
+
             if ( version_compare( $wp_version, '3.8', '>=' ) ) {
                 wp_enqueue_style( 'mcc-icons', NBT_PLUGIN_URL . 'blogtemplatesfiles/assets/css/icons-38.css' );
             }
@@ -85,7 +85,7 @@ if ( ! class_exists( 'blog_templates' ) ) {
             if ( empty( $categories_count ) ) {
                 $model->add_default_template_category();
             }
-         
+
         }
 
         function maybe_upgrade() {
@@ -118,7 +118,7 @@ if ( ! class_exists( 'blog_templates' ) ) {
                 update_site_option( 'blog_templates_options', $new_options );
                 update_site_option( 'nbt_plugin_version', '1.7.2' );
             }
-            
+
 
             if ( version_compare( $saved_version, '1.7.6', '<' ) ) {
                 $options = get_site_option( 'blog_templates_options', array( 'templates' => array() ) );
@@ -128,7 +128,7 @@ if ( ! class_exists( 'blog_templates' ) ) {
                     $new_options['templates'][ $key ]['block_posts_pages'] = false;
                     $new_options['templates'][ $key ]['post_category'] = array( 'all-categories' );
                 }
-                
+
                 update_site_option( 'blog_templates_options', $new_options );
                 update_site_option( 'nbt_plugin_version', '1.7.6' );
             }
@@ -159,20 +159,20 @@ if ( ! class_exists( 'blog_templates' ) ) {
 
             if ( version_compare( $saved_version, '2.2', '<' ) ) {
                 blog_templates_upgrade_22();
-                update_site_option( 'nbt_plugin_version', '2.2' );   
+                update_site_option( 'nbt_plugin_version', '2.2' );
             }
 
             if ( version_compare( $saved_version, '2.6.2', '<' ) ) {
                 blog_templates_upgrade_262();
-                update_site_option( 'nbt_plugin_version', '2.6.2' );   
+                update_site_option( 'nbt_plugin_version', '2.6.2' );
             }
 
         }
 
         /**
          * Delete templates attached to blogs that no longer exist
-         * 
-         * @param Integer $blog_id 
+         *
+         * @param Integer $blog_id
          */
         function maybe_delete_template( $blog_id ) {
 
@@ -224,6 +224,19 @@ if ( ! class_exists( 'blog_templates' ) ) {
             }
         }
 
+        function add_template_selector() {
+			?>
+			<table class="form-table">
+				<tr class="form-field form-required">
+					<th scope="row"><label for="blog-template"><?php _e( 'Template' ) ?></label></th>
+					<td>
+						<?php $this->get_template_dropdown('blog_template_admin', true ); ?>
+					</td>
+				</tr>
+			</table>
+			<?php
+		}
+
         /**
         * Returns a dropdown of all blog templates
         *
@@ -240,15 +253,15 @@ if ( ! class_exists( 'blog_templates' ) ) {
 
             $selector = '';
             if ( is_array( $templates ) ) {
-                $selector .= '<select name="' . esc_attr( $tag_name ) . '">';
+                $selector .= '<select name="' . esc_attr( $tag_name ) . '" id="' . esc_attr( $tag_name ) . '">';
                 if ( $include_none )
                     $selector .= '<option value="none">' . __( 'None', 'blog_templates' ) . '</option>';
-                
+
                 foreach ( $templates as $key => $value ) {
                     $label = ( $esc_js ) ? esc_js( $value ) : stripslashes_deep( $value );
                     $selector .= '<option value="' . esc_attr( $key ) . '" ' . esc_attr( selected( $key == $settings['default'], true, false ) ) . '>' . $label . '</option>';
                 }
-                $selector .= '</select>';    
+                $selector .= '</select>';
 
             }
 
@@ -258,26 +271,7 @@ if ( ! class_exists( 'blog_templates' ) ) {
                 return $selector;
         }
 
-        /**
-        * Adds the Template dropdown to the WPMU New Blog form
-        *
-        * @since 1.0
-        */
-        function add_template_dd() {
-            global $pagenow;
-            if( ! in_array( $pagenow, array( 'ms-sites.php', 'site-new.php' ) ) || isset( $_GET['action'] ) && 'editblog' == $_GET['action'] )
-                return;
 
-            wp_register_script( 'nbt-template-selector', NBT_PLUGIN_URL . 'blogtemplatesfiles/assets/js/site-template-selector.js', array( 'jquery' ) );
-
-            $l10n = array(
-                'selector_title' => __( 'Template', 'blog_templates' ),
-                'dropdown' => $this->get_template_dropdown('blog_template_admin', true, false )
-            );
-
-            wp_localize_script( 'nbt-template-selector', 'nbt', $l10n );
-            wp_enqueue_script( 'nbt-template-selector' );
-        }
 
 
         /**
@@ -288,17 +282,13 @@ if ( ! class_exists( 'blog_templates' ) ) {
         *
         * @since 1.0
         */
-        function set_blog_defaults( $new_site, $args ) {
+        function set_blog_defaults( $blog_id, $user_id, $_passed_domain=false, $_passed_path=false, $_passed_site_id=false, $_passed_meta=false ) {
             global $wpdb, $multi_dm;
-
-            $blog_id = $new_site->blog_id;
-            $user_id = isset( $args[ 'user_id' ] ) ? intval( $args[ 'user_id' ] ) : 0;
-            $meta    = ! empty( $args['options'] ) ? $args['options'] : array();
 
             $settings = nbt_get_settings();
 
             $default = false;
-            
+
             /* Start special Multi-Domain feature */
             if( !empty( $multi_dm ) ) {
                 $bloginfo = get_blog_details( (int) $blog_id, false );
@@ -312,13 +302,13 @@ if ( ! class_exists( 'blog_templates' ) ) {
             /* End special Multi-Domain feature */
 
             if( empty( $default ) && isset( $settings['default'] ) && is_numeric( $settings['default'] ) ) { // select global default
-                $default = isset($settings['templates'][$settings['default']]) 
+                $default = isset($settings['templates'][$settings['default']])
                     ? $settings['templates'][$settings['default']]
                     : false
                 ;
             }
 
-            
+
             $template = '';
             // Check $_POST first for passed template and use that, if present.
             // Otherwise, check passed meta from blog signup.
@@ -336,8 +326,8 @@ if ( ! class_exists( 'blog_templates' ) ) {
             }
             elseif ( isset( $_POST['blog_template'] ) && is_numeric( $_POST['blog_template'] ) ) { //If they've chosen a template, use that. For some reason, when PHP gets 0 as a posted var, it doesn't recognize it as is_numeric, so test for that specifically
                 $template = $settings['templates'][$_POST['blog_template']];
-            } elseif ($meta && isset($meta['blog_template']) && is_numeric($meta['blog_template'])) { // Do we have a template in meta?
-                $template = $settings['templates'][$meta['blog_template']]; // Why, yes. Yes, we do. Use that. 
+            } elseif ($_passed_meta && isset($_passed_meta['blog_template']) && is_numeric($_passed_meta['blog_template'])) { // Do we have a template in meta?
+                $template = $settings['templates'][$_passed_meta['blog_template']]; // Why, yes. Yes, we do. Use that.
             } elseif ( $default ) { //If they haven't chosen a template, use the default if it exists
                 $template = $default;
             }
@@ -345,7 +335,7 @@ if ( ! class_exists( 'blog_templates' ) ) {
             if ( ! $template || 'none' == $template )
                 return; //No template, lets leave
 
-            switch_to_blog( $blog_id ); //Switch to the blog that was just created            
+            switch_to_blog( $blog_id ); //Switch to the blog that was just created
 
             include_once( 'copier.php' );
 
@@ -405,9 +395,9 @@ if ( ! class_exists( 'blog_templates' ) ) {
             <?php
         }
 
-       
 
-        
+
+
 
         /**
         * Save Blog Template value in the current domain array
@@ -449,9 +439,9 @@ if ( ! class_exists( 'blog_templates' ) ) {
             }
         }
 
-        
 
-        
+
+
         function maybe_add_template_hidden_field() {
             $settings = nbt_get_settings();
             if ( 'page_showcase' == $settings['registration-templates-appearance'] ) {
@@ -483,7 +473,7 @@ if ( ! class_exists( 'blog_templates' ) ) {
         function registration_template_selection () {
             $settings = nbt_get_settings();
 
-            if ( ! $settings['show-registration-templates'] ) 
+            if ( ! $settings['show-registration-templates'] )
                 return false;
 
 
@@ -511,9 +501,9 @@ if ( ! class_exists( 'blog_templates' ) ) {
 
             // Setup theme file
             $theme_file = locate_template( array( $tpl_file ) );
-            $theme_file = $theme_file ? $theme_file : NBT_PLUGIN_DIR . 'blogtemplatesfiles/template/' . $tpl_file;
+            $theme_file = $theme_file ? $theme_file : NBT_PLUGIN_DIR . '/blogtemplatesfiles/template/' . $tpl_file;
 
-            if ( ! file_exists( $theme_file ) ) 
+            if ( ! file_exists( $theme_file ) )
                 return false;
 
             nbt_render_theme_selection_scripts( $settings );
@@ -523,7 +513,7 @@ if ( ! class_exists( 'blog_templates' ) ) {
             @include $theme_file;
 
         }
-        
+
         /**
          * Store selected template in blog meta on signup.
          */
@@ -534,7 +524,7 @@ if ( ! class_exists( 'blog_templates' ) ) {
             return $meta;
         }
 
-        
+
 
     } // End Class
 
@@ -543,5 +533,4 @@ if ( ! class_exists( 'blog_templates' ) ) {
     $blog_templates = new blog_templates();
 
 } // End if blog_templates class exists statement
-
 

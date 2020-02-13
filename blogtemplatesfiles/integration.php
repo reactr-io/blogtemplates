@@ -39,7 +39,6 @@ add_action( 'plugins_loaded', 'nbt_appplus_unregister_action' );
 function nbt_appplus_unregister_action() {
 	if ( class_exists('Appointments' ) ) {
 		global $appointments;
-		//TODO : Replace `wpmu_new_blog` once updated in App+
 		remove_action( 'wpmu_new_blog', array( $appointments, 'new_blog' ), 10, 6 );
 	}
 }
@@ -83,7 +82,7 @@ function nbt_copy_autoblog_feeds( $template ) {
 
 	if ( ! isset( $template['blog_id'] ) )
 		return;
-	
+
 	$source_blog_id = $template['blog_id'];
 	$autoblog_on = false;
 
@@ -163,18 +162,18 @@ function nbt_copy_easy_google_fonts_controls( $template, $destination_blog_id ) 
 		$postmeta_query = "SELECT t1.* FROM {$wpdb->postmeta} t1 ";
 		$postmeta_query .= "INNER JOIN $wpdb->posts t2 ON t1.post_id = t2.ID WHERE t2.post_type = 'tt_font_control'";
 		$postmeta_results = $wpdb->get_results( $postmeta_query );
-		
+
 		restore_current_blog();
 
 		switch_to_blog( $destination_blog_id );
 		foreach ( $posts_results as $row ) {
             $row = (array)$row;
-            $wpdb->replace( $wpdb->posts, $row );
+            $wpdb->insert( $wpdb->posts, $row );
         }
 
         foreach ( $postmeta_results as $row ) {
             $row = (array)$row;
-            $wpdb->replace( $wpdb->postmeta, $row );
+            $wpdb->insert( $wpdb->postmeta, $row );
         }
 
         restore_current_blog();
@@ -189,7 +188,7 @@ add_action( 'blog_templates-copy-options', 'nbt_hooks_set_https_settings' );
 function nbt_hooks_set_https_settings( $template ) {
 	if ( ! function_exists( 'is_plugin_active' ) )
 		include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
-	
+
 	if ( is_plugin_active( 'wordpress-https/wordpress-https.php' ) ) {
 		if ( get_option( 'wordpress-https_ssl_admin' ) )
 			update_option( 'wordpress-https_ssl_host', trailingslashit( get_site_url( get_current_blog_id(), '', 'https' ) ) );
@@ -211,7 +210,7 @@ function nbt_woo_copy_files_skip_list( $skip_list, $dir_to_copy ) {
 
 add_action( "blog_templates-copy-after_copying", 'nbt_woo_after_copy' );
 function nbt_woo_after_copy() {
-	
+
 	if ( is_file( WP_CONTENT_DIR . '/plugins/woocommerce/includes/admin/class-wc-admin-settings.php' ) )
 		include_once( WP_CONTENT_DIR . '/plugins/woocommerce/includes/admin/class-wc-admin-settings.php' );
 
@@ -237,8 +236,8 @@ function nbt_upfront_copy_options( $template, $destination_blog_id ) {
 		$destination_url = get_site_url( $destination_blog_id );
 		$source_url = preg_replace( '/^https?\:\/\//', '', $source_url );
 		$destination_url = preg_replace( '/^https?\:\/\//', '', $destination_url );
-		
-		$results = $wpdb->get_col( "SELECT option_name FROM $wpdb->options WHERE option_name LIKE '$theme_name%'");	
+
+		$results = $wpdb->get_col( "SELECT option_name FROM $wpdb->options WHERE option_name LIKE '$theme_name%'");
 
 		foreach ( $results as $option_name ) {
 			$json_value = get_option( $option_name );
@@ -247,7 +246,7 @@ function nbt_upfront_copy_options( $template, $destination_blog_id ) {
 
 			$value = json_decode( $json_value );
 
-			
+
 			if ( is_object( $value ) || is_array( $value ) ) {
 				$json_value = str_replace( $source_url, $destination_url, $json_value );
 				update_option( $option_name, $json_value );

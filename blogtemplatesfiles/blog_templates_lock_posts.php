@@ -23,7 +23,7 @@ class NBT_Lock_Posts {
 
 		if ( ! apply_filters( 'nbt_activate_block_posts_feature', true ) )
 			return;
-		
+
 		add_action( 'init', array( &$this, 'check' ) );
 
 		// Lock the posts good.
@@ -36,12 +36,10 @@ class NBT_Lock_Posts {
 	}
 
 	function add_meta_box () {
-		if ( ! is_super_admin() ) 
+		if ( ! is_super_admin() )
 			return;
-        
-        $types = apply_filters('nbt_custom_lock_types', $this->_lock_types);
 
-		foreach ( $types as $type ) {
+		foreach ( $this->_lock_types as $type ) {
 			add_meta_box( 'postlock', __( 'Post Status', 'blog_templates' ), array( $this, 'meta_box_output' ), $type, 'advanced', 'high' );
 		}
 	}
@@ -92,7 +90,7 @@ class NBT_Lock_Posts {
 	function kill_edit_cap ( $all, $cap, $args ) {
 		global $post;
 
-		if ( ! $args ) 
+		if ( ! $args )
 			return $all; // Something is wrong here.
 
 		// Bail out if we're not asking about a post:

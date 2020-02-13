@@ -8,12 +8,12 @@ class NBT_Templates_Table extends WP_List_Table {
 
     var $localization_domain = 'blog_templates';
 
-    function __construct(){  
-        parent::__construct( 
+    function __construct(){
+        parent::__construct(
             array(
                 'singular'  => 'template',
                 'plural'    => 'templates',
-            ) 
+            )
         );
     }
 
@@ -26,7 +26,7 @@ class NBT_Templates_Table extends WP_List_Table {
                     $content = $item[ $column_name ];
             }
         }
-        
+
         return apply_filters( 'blog_templates-templates_table_custom_column', $content, $item, $column_name );
     }
 
@@ -100,7 +100,7 @@ class NBT_Templates_Table extends WP_List_Table {
             $img = nbt_get_default_screenshot_url($item['blog_id']);
         else
             $img = $item['options']['screenshot'];
-        
+
         return '<img style="max-width:25%;" src="' . $img . '"/>';
     }
 
@@ -113,12 +113,20 @@ class NBT_Templates_Table extends WP_List_Table {
         return apply_filters( 'blog_templates-templates_table_columns', $columns );
     }
 
+    function get_sortable_columns(){
+        $sortable_columns = array(
+            'name'          => array( 'name', false ),
+            'blog'          => array( 'blog_id', false ),
+        );
+        return $sortable_columns;
+    }
+
     function prepare_items() {
         $per_page = 30;
 
         $columns = $this->get_columns();
         $hidden = array();
-        $sortable = array();
+        $sortable = $this->get_sortable_columns();
 
         $this->_column_headers = array($columns, $hidden, $sortable);
 
@@ -146,12 +154,12 @@ class NBT_Templates_Table extends WP_List_Table {
         }
         $this->items = $new_data;
 
-        $this->set_pagination_args( 
+        $this->set_pagination_args(
             array(
-                'total_items' => $total_items,                
-                'per_page'    => $per_page,                   
-                'total_pages' => ceil( $total_items / $per_page ) 
-            ) 
+                'total_items' => $total_items,
+                'per_page'    => $per_page,
+                'total_pages' => ceil( $total_items / $per_page )
+            )
         );
     }
 
